@@ -38,8 +38,6 @@ public class JTJson {
 
 	@SuppressWarnings("unchecked")
 	private StringBuilder getJsonAsStringBuilder(StringBuilder sb, Object obj) {
-		Class<? extends Object> clazz = obj.getClass();
-		String className = clazz.getName();
 		switch (checkType(obj)) {
 		case 16: {
 			doArray(sb, obj);
@@ -65,13 +63,23 @@ public class JTJson {
 		return sb;
 	}
 
+	/**
+	 * @param sb
+	 * @param obj
+	 */
 	private void doArray(StringBuilder sb, Object obj) {
 		int length = Array.getLength(obj);
 		sb.append('[');
 		for (int i = 0; i < length; i++) {
 			getJsonAsStringBuilder(sb, Array.get(obj, i));
+			sb.append(',');
 		}
+		removeComma(sb);
 		sb.append(']');
+	}
+	private void removeComma(StringBuilder sb) {
+		if (sb.charAt(sb.length() - 1) == ',')
+			sb.deleteCharAt(sb.length() - 1);
 	}
 
 	private int checkType(Object obj) {
@@ -111,7 +119,7 @@ public class JTJson {
 		//0:
 		if(op==0)return string;
 		//1:
-		if(op==1)return string.replaceAll("(\\\\|/|\\\")","\\\\$1");//效率不确定
+	//	if(op==1)return string.replaceAll("(\\\\|/|\\\")","\\$1");//效率不确定  $1不生效
 		//2:
 		int length=string.length();
 		int lastCopy=0;
@@ -119,19 +127,18 @@ public class JTJson {
 		for(int i=0;i<length;i++){
 			char ch=string.charAt(i);
 			if(ch==34||ch==92||ch==47){
-			}else if(ch<16){
-				String t;
+			}else if(op==2&&ch<16){
 				switch (ch){
-				case 8  : t="\\b";break;
-				case 9  : t="\\t";break;
-				case 10 : t="\\n";break;
-				case 12 : t="\\f";break;
-				case 13 : t="\\r";break;
+				case 8  : ch='b';break;
+				case 9  : ch='t';break;
+				case 10 : ch='n';break;
+				case 12 : ch='f';break;
+				case 13 : ch='r';break;
 				}
 		} else continue;
 		sb.append(string, lastCopy, i);// 因jdk对其的实现并不理想,所以未达到最高效率
 		sb.append("\\" + ch);
-		lastCopy = i;
+		lastCopy = i+1;
 		continue;
 		}
 		if(lastCopy!=length)sb.append(string, lastCopy, length);// 保证结尾的拷贝
@@ -140,7 +147,7 @@ public class JTJson {
 
 	private void doObject(StringBuilder sb, Object obj) {
 		sb.append('{');
-		Class clazz = obj.getClass();
+		Class<?> clazz = obj.getClass();
 		for (Method method : clazz.getMethods()) {
 			String methodName = method.getName();
 			if (methodName.startsWith("get") && !methodName.equals("getClass")) {
@@ -157,8 +164,7 @@ public class JTJson {
 				sb.append(',');
 			}
 		}
-		if (sb.charAt(sb.length() - 1) == ',')
-			sb.deleteCharAt(sb.length() - 1);
+		removeComma(sb);
 		sb.append('}');
 	}
 
@@ -171,8 +177,7 @@ public class JTJson {
 			getJsonAsStringBuilder(sb, entry.getValue());
 			sb.append(',');
 		}
-		if (sb.charAt(sb.length() - 1) == ',')
-			sb.deleteCharAt(sb.length() - 1);
+		removeComma(sb);
 		sb.append('}');
 
 	}
@@ -181,7 +186,9 @@ public class JTJson {
 		sb.append('[');
 		for (Object object : obj) {
 			getJsonAsStringBuilder(sb, object);
+			sb.append(',');
 		}
+		removeComma(sb);
 		sb.append(']');
 
 	}
