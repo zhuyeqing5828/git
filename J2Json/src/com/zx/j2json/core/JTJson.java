@@ -65,26 +65,26 @@ public class JTJson {
 			break;
 		}
 		case 4: {
-			doMap(sb, (Map<String, Object>) obj);
+			doMap(sb, (Map<Object, Object>) obj);
 			break;
 		}
 		case 2: {
 			doObject(sb, obj);
 			break;
 		}
-		case 0:{
-			doExist(sb,obj);break;
-			}
+		//case 0:{//a wrong way,never do this
+		//	doExist(sb,obj);break;
+		//	}
 		default:
 			doBasic(sb, obj);
 		}
 		return sb;
 	}
 		
-	private void doExist(StringBuilder sb, Object obj) {
-		String value=map.get(obj);
-		sb.append(value);
-	}
+	//private void doExist(StringBuilder sb, Object obj) {
+	//	String value=map.get(obj);
+	//	sb.append(value);
+	//}
 	/**
 	 * @param sb
 	 * @param obj
@@ -119,8 +119,9 @@ public class JTJson {
 		if (obj == null||obj instanceof Number || obj instanceof Character
 				|| obj instanceof Boolean || obj instanceof CharSequence)
 			return 1;
-		if(!map.containsKey(obj))
-			return 0;
+		//错误的路径
+//		if(!map.containsKey(obj)) 
+//			return 0;
 		Class<? extends Object> clazz = obj.getClass();
 		if (clazz.isArray())
 			return 16;
@@ -201,8 +202,7 @@ public class JTJson {
 			String methodName = method.getName();
 			if (methodName.startsWith("get") && !methodName.equals("getClass")) {
 				value=Character.toLowerCase(methodName.charAt(3))+ methodName.substring(4);
-				sb.append(value);
-				sb.append(':');
+				
 				try {
 					key= method.invoke(obj);
 				} catch (IllegalAccessException | IllegalArgumentException
@@ -210,20 +210,23 @@ public class JTJson {
 					// never do this;
 					e.printStackTrace();
 				}
-				map.put(key, value);
-				getJsonAsStringBuilder(sb,key);
-				sb.append(',');
+				if (map.put(key, value) == null) {
+					sb.append(value);
+					sb.append(':');
+					getJsonAsStringBuilder(sb, key);
+					sb.append(',');
+				}
 			}
 		}
 		removeComma(sb);
 		sb.append('}');
 	}
 
-	private void doMap(StringBuilder sb, Map<String, Object> obj) {
+	private void doMap(StringBuilder sb, Map<Object, Object> obj) {
 		sb.append('{');
-		Set<Entry<String, Object>> entrySet = obj.entrySet();
-		for (Entry<String, Object> entry : entrySet) {
-			sb.append((String) entry.getKey());
+		Set<Entry<Object, Object>> entrySet = obj.entrySet();
+		for (Entry<Object, Object> entry : entrySet) {
+			sb.append(entry.getKey());
 			sb.append(':');
 			getJsonAsStringBuilder(sb, entry.getValue());
 			sb.append(',');
